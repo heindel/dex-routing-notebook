@@ -1,6 +1,6 @@
 # Gas-Aware DEX Routing — Interactive Pluto Notebook
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://binder.plutojl.org/open?url=https%3A%2F%2Fraw.githubusercontent.com%2Fheindel%2Fdex-routing-notebook%2Fmain%2Fdex_routing.jl)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/heindel/dex-routing-notebook/main?urlpath=pluto/open?path=dex_routing.jl)
 
 **Click the badge above to launch the interactive notebook in your browser — no installation required.**
 
