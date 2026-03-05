@@ -1,4 +1,5 @@
 #!/bin/bash
 set -ex
 
-echo "Julia packages will be instantiated by repo2docker buildpack."
+# Install the jupyter-server-proxy plugin so /pluto/ routes to the Pluto server
+pip install ./binder
