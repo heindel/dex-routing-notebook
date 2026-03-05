@@ -8,7 +8,7 @@ using InteractiveUtils
 begin
 	using PlutoUI, Graphs
 	using JuMP, HiGHS, Ipopt
-	using Plots
+	using PlutoPlotly
 	using LinearAlgebra
 	md"**Packages loaded.**"
 end
@@ -107,20 +107,23 @@ let
 	# Effective price = y/x
 	prices = [x > 0 ? amount_out(p, x) / x : spot_price(p) for x in xs]
 
-	p1 = plot(xs, ys,
-		xlabel="Amount In", ylabel="Amount Out",
-		title="Exchange Function f(x)",
-		label="f(x)", lw=2, color=:blue)
-	plot!(p1, xs, spot_price(p) .* xs,
-		label="Spot price (tangent)", ls=:dash, color=:gray)
+	p1 = plot(
+		[scatter(x=collect(xs), y=ys, mode="lines", name="f(x)",
+			line=attr(color="blue", width=2)),
+		 scatter(x=collect(xs), y=spot_price(p) .* collect(xs), mode="lines",
+			name="Spot price (tangent)", line=attr(color="gray", dash="dash"))],
+		Layout(xaxis_title="Amount In", yaxis_title="Amount Out",
+			title="Exchange Function f(x)"))
 
-	p2 = plot(xs, prices,
-		xlabel="Amount In", ylabel="Effective Price (out/in)",
-		title="Price Impact",
-		label="Effective price", lw=2, color=:red)
-	hline!(p2, [spot_price(p)], label="Spot price", ls=:dash, color=:gray)
+	p2 = plot(
+		[scatter(x=collect(xs), y=prices, mode="lines", name="Effective price",
+			line=attr(color="red", width=2)),
+		 scatter(x=[first(xs), last(xs)], y=[spot_price(p), spot_price(p)],
+			mode="lines", name="Spot price", line=attr(color="gray", dash="dash"))],
+		Layout(xaxis_title="Amount In", yaxis_title="Effective Price (out/in)",
+			title="Price Impact"))
 
-	plot(p1, p2, layout=(1,2), size=(800, 350))
+	[p1 p2]
 end
 
 # ╔═╡ 9a1b2c3d-0008-4000-8000-000000000001
@@ -341,16 +344,19 @@ let
 	out_all_p1 = amount_out(p1, X)
 	out_all_p2 = amount_out(p2, X)
 
-	p = plot(ss, outputs,
-		xlabel="Fraction to Large Pool", ylabel="Total USDC Output",
-		title="Split Routing: $(X) ETH across 2 pools",
-		label="Split output", lw=2, color=:blue)
-	scatter!(p, [s_opt], [out_opt], label="Optimal (s=$(round(s_opt, digits=3)))",
-		ms=8, color=:red)
-	hline!(p, [out_all_p1], label="100% Large Pool", ls=:dash, color=:green)
-	hline!(p, [out_all_p2], label="100% Small Pool", ls=:dash, color=:orange)
-
-	plot(p, size=(700, 400))
+	plot(
+		[scatter(x=collect(ss), y=outputs, mode="lines", name="Split output",
+			line=attr(color="blue", width=2)),
+		 scatter(x=[s_opt], y=[out_opt], mode="markers",
+			name="Optimal (s=$(round(s_opt, digits=3)))",
+			marker=attr(size=8, color="red")),
+		 scatter(x=[first(ss), last(ss)], y=[out_all_p1, out_all_p1], mode="lines",
+			name="100% Large Pool", line=attr(color="green", dash="dash")),
+		 scatter(x=[first(ss), last(ss)], y=[out_all_p2, out_all_p2], mode="lines",
+			name="100% Small Pool", line=attr(color="orange", dash="dash"))],
+		Layout(xaxis_title="Fraction to Large Pool", yaxis_title="Total USDC Output",
+			title="Split Routing: $(X) ETH across 2 pools",
+			width=700, height=400))
 end
 
 # ╔═╡ 9a1b2c3d-0020-4000-8000-000000000001
@@ -676,21 +682,26 @@ let
 	n_pools_free = [length(r.active_pools) for r in results_free]
 	n_pools_gas = [length(r.active_pools) for r in results_gas]
 
-	p1 = plot(trade_sizes, net_gas .- net_free,
-		xlabel="Trade Size (ETH)", ylabel="Gas-aware advantage (USDC)",
-		title="Net Output Improvement from Gas Awareness",
-		label="Gas-aware − Gas-free", lw=2, marker=:circle,
-		color=:blue)
-	hline!(p1, [0], ls=:dash, color=:gray, label=nothing)
+	p1 = plot(
+		[scatter(x=trade_sizes, y=net_gas .- net_free, mode="lines+markers",
+			name="Gas-aware − Gas-free",
+			line=attr(color="blue", width=2), marker=attr(symbol="circle")),
+		 scatter(x=[first(trade_sizes), last(trade_sizes)], y=[0, 0], mode="lines",
+			line=attr(color="gray", dash="dash"), showlegend=false)],
+		Layout(xaxis_title="Trade Size (ETH)", yaxis_title="Gas-aware advantage (USDC)",
+			title="Net Output Improvement from Gas Awareness"))
 
-	p2 = plot(trade_sizes, n_pools_free,
-		xlabel="Trade Size (ETH)", ylabel="Pools Used",
-		title="Number of Active Pools",
-		label="Gas-free", lw=2, marker=:circle, color=:red)
-	plot!(p2, trade_sizes, n_pools_gas,
-		label="Gas-aware", lw=2, marker=:square, color=:blue)
+	p2 = plot(
+		[scatter(x=trade_sizes, y=n_pools_free, mode="lines+markers",
+			name="Gas-free", line=attr(color="red", width=2),
+			marker=attr(symbol="circle")),
+		 scatter(x=trade_sizes, y=n_pools_gas, mode="lines+markers",
+			name="Gas-aware", line=attr(color="blue", width=2),
+			marker=attr(symbol="square"))],
+		Layout(xaxis_title="Trade Size (ETH)", yaxis_title="Pools Used",
+			title="Number of Active Pools"))
 
-	plot(p1, p2, layout=(1,2), size=(800, 350))
+	[p1 p2]
 end
 
 # ╔═╡ 9a1b2c3d-0031-4000-8000-000000000001
@@ -767,20 +778,22 @@ let
 	nets = [r.result.net_output for r in h.all_results]
 	nps = [r.n_pools for r in h.all_results]
 
-	p1 = plot(ts, nets,
-		xlabel="Threshold (fraction of total input)",
-		ylabel="Net Output (USDC)",
-		title="Threshold Heuristic Sweep ($(X) ETH)",
-		label="Net output", lw=2, marker=:circle, color=:blue)
-	scatter!(p1, [h.best_threshold], [h.best_result.net_output],
-		label="Best (t=$(h.best_threshold))", ms=10, color=:red)
+	p1 = plot(
+		[scatter(x=ts, y=nets, mode="lines+markers", name="Net output",
+			line=attr(color="blue", width=2), marker=attr(symbol="circle")),
+		 scatter(x=[h.best_threshold], y=[h.best_result.net_output], mode="markers",
+			name="Best (t=$(h.best_threshold))", marker=attr(size=10, color="red"))],
+		Layout(xaxis_title="Threshold (fraction of total input)",
+			yaxis_title="Net Output (USDC)",
+			title="Threshold Heuristic Sweep ($(X) ETH)"))
 
-	p2 = bar(ts, nps,
-		xlabel="Threshold", ylabel="Pools in subset",
-		title="Pool Pruning",
-		label="Active pools", color=:lightblue)
+	p2 = plot(
+		[bar(x=ts, y=nps, name="Active pools",
+			marker=attr(color="lightblue"))],
+		Layout(xaxis_title="Threshold", yaxis_title="Pools in subset",
+			title="Pool Pruning"))
 
-	plot(p1, p2, layout=(1,2), size=(800, 350))
+	[p1 p2]
 end
 
 # ╔═╡ 9a1b2c3d-0035-4000-8000-000000000001
@@ -821,7 +834,7 @@ HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
 Ipopt = "b6b21f68-93f8-5de0-b562-5493be1d77c9"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+PlutoPlotly = "8e989ff0-3d88-8e9f-f020-2b208a939ff0"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 
 [compat]
@@ -829,7 +842,7 @@ Graphs = "~1.9"
 HiGHS = "~1.9"
 Ipopt = "~1.6"
 JuMP = "~1.23"
-Plots = "~1.40"
+PlutoPlotly = "~0.6"
 PlutoUI = "~0.7"
 """
 

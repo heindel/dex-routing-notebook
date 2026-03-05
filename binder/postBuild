@@ -1,5 +1,4 @@
 #!/bin/bash
 set -ex
 
-echo "Instantiating Julia packages..."
-julia --project=binder -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+echo "Julia packages will be instantiated by repo2docker buildpack."
